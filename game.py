@@ -9,10 +9,14 @@ class Game:
         self.screen = pygame.display.set_mode((640, 480))
 
         self.clock = pygame.time.Clock()
+        
+        self.img = pygame.image.load('10_platformer_1/data/images/clouds/cloud_1.png')
 
     def run(self):        
     ### Function to not get a black screen
         while True:
+            self.screen.blit(self.img, (100, 100))
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
