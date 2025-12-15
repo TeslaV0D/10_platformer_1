@@ -11,17 +11,34 @@ class Game:
         self.clock = pygame.time.Clock()
         
         self.img = pygame.image.load('10_platformer_1/data/images/clouds/cloud_1.png')
-
+        self.img.set_colorkey((0, 0, 0))        ### Remove background
+        
+        self.img_pos = [160, 260]
+        self.movement = [False, False]
+        
+        
     def run(self):        
     ### Function to not get a black screen
         while True:
-            self.screen.blit(self.img, (100, 100))
+            self.screen.fill((14, 219, 248))  
+            
+            self.img_pos[1] += (self.movement[1] - self.movement[0]) * 5
+            self.screen.blit(self.img, self.img_pos)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-            
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self.movement[0] = True
+                    if event.key == pygame.K_DOWN:
+                        self.movement[1] = True
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_UP:
+                        self.movement[0] = False
+                    if event.key == pygame.K_DOWN:
+                        self.movement[1] = False
             pygame.display.update()
             self.clock.tick(60)
 
