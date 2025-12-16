@@ -1,8 +1,8 @@
 import pygame
 import sys
-from scripts.utils import load_image
+from scripts.utils import load_image, load_images
 from scripts.entities import PhysicsEntity
-
+from scripts.tilemap import Tilemap
 class Game:
     def __init__(self): 
         pygame.init()
@@ -17,18 +17,28 @@ class Game:
         self.movement = [False, False]
 
         self.assets = {
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'large_decor': load_images('tiles/large_decor'),
+            'stone': load_images('tiles/stone'),
             'player': load_image('entities/player.png')
         }
+        
         self.player = PhysicsEntity(self, 'player', (50, 50), (8, 15))
                 
+        self.tilemap = Tilemap(self,    tile_size=16)
+        
     def run(self):        
     ### Function to not get a black screen
         while True:
             self.display.fill((14, 219, 248))  
 
-            self.player.update((self.movement[1] - self.movement[0], 0))
+            self.tilemap.render(self.display)
+            
+            self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             self.player.render(self.display)
             
+            print(self.tilemap.physics_rects_around(self.player.pos))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
