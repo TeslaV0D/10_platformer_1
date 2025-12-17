@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import math
 
 from scripts.utils import load_image, load_images, Animation
 from scripts.entities import PhysicsEntity, Player
@@ -76,6 +77,8 @@ class Game:
             for particle in self.particles.copy():
                 kill = particle.update()
                 particle.render(self.display, offset = render_scroll)
+                if particle.type == 'leaf':
+                    particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3                    
                 if kill:
                     self.particles.remove(particle)
                 
