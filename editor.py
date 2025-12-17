@@ -7,7 +7,7 @@ class Editor:
     def __init__(self): 
         pygame.init()
 
-        pygame.display.set_caption('Editor')
+        pygame.display.set_caption("Editor")
         self.screen = pygame.display.set_mode((640, 480))
 
         self.display = pygame.Surface((320, 240))
@@ -16,10 +16,10 @@ class Editor:
 
 
         self.assets = {
-            'decor': load_images('tiles/decor'),
-            'grass': load_images('tiles/grass'),
-            'large_decor': load_images('tiles/large_decor'),
-            'stone': load_images('tiles/stone'),
+            "decor": load_images("tiles/decor"),
+            "grass": load_images("tiles/grass"),
+            "large_decor": load_images("tiles/large_decor"),
+            "stone": load_images("tiles/stone"),
         }
 
         self.movement = [False, False, False, False]
@@ -27,7 +27,7 @@ class Editor:
         self.tilemap = Tilemap(self, tile_size=16)
         
         try:
-            self.tilemap.load('map.json')
+            self.tilemap.load("map.json")
         except FileNotFoundError:
             pass
         
@@ -68,15 +68,15 @@ class Editor:
             else:
                 self.display.blit(current_tile_img, mpos)
             if self.clicking and self.ongrid:
-                self.tilemap.tilemap[str(tile_pos[0]) + ';' + str(tile_pos[1])] = {'type': 
-                    self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': tile_pos}
+                self.tilemap.tilemap[str(tile_pos[0]) + ";" + str(tile_pos[1])] = {"type": 
+                    self.tile_list[self.tile_group], "variant": self.tile_variant, "pos": tile_pos}
             if self.right_clicking:
-                tile_loc = str(tile_pos[0]) + ';' + str(tile_pos[1])
+                tile_loc = str(tile_pos[0]) + ";" + str(tile_pos[1])
                 if tile_loc in self.tilemap.tilemap:
                     del self.tilemap.tilemap[tile_loc]
                 for tile in self.tilemap.offgrid_tiles.copy():
-                    tile_img = self.assets[tile['type']][tile['variant']]
-                    tile_r = pygame.Rect(tile['pos'][0] - self.scroll[0], tile['pos'][1] - self.scroll[1], tile_img.get_width(), tile_img.get_height())
+                    tile_img = self.assets[tile["type"]][tile["variant"]]
+                    tile_r = pygame.Rect(tile["pos"][0] - self.scroll[0], tile["pos"][1] - self.scroll[1], tile_img.get_width(), tile_img.get_height())
                     if tile_r.collidepoint(mpos):
                         self.tilemap.offgrid_tiles.remove(tile)
             self.display.blit(current_tile_img, (5, 5))
@@ -90,8 +90,8 @@ class Editor:
                     if event.button == 1:
                         self.clicking = True
                         if not self.ongrid:
-                            self.tilemap.offgrid_tiles.append({'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 
-                                                               'pos': (mpos[0] + self.scroll[0], mpos[1] + self.scroll[1])})
+                            self.tilemap.offgrid_tiles.append({"type": self.tile_list[self.tile_group], "variant": self.tile_variant, 
+                                                               "pos": (mpos[0] + self.scroll[0], mpos[1] + self.scroll[1])})
                     if event.button == 3:
                         self.right_clicking = True
                     if self.shift:
@@ -124,7 +124,7 @@ class Editor:
                     if event.key == pygame.K_g:
                         self.ongrid = not self.ongrid
                     if event.key == pygame.K_o:
-                        self.tilemap.save('map.json')
+                        self.tilemap.save("map.json")
                     if event.key == pygame.K_t:
                         self.tilemap.autotile()
                     if event.key == pygame.K_LSHIFT:
