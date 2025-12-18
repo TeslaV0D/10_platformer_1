@@ -1,6 +1,6 @@
 import sys
-
 import pygame
+import subprocess
 
 from scripts.utils import load_images
 from scripts.tilemap import Tilemap
@@ -44,6 +44,10 @@ class Editor:
         self.right_clicking = False
         self.shift = False
         self.ongrid = True
+    
+    def start_menu(self):
+        pygame.quit()
+        sys.exit(subprocess.run(["python", "game.py"]).returncode)
         
     def run(self):
         while True:
@@ -129,6 +133,8 @@ class Editor:
                         self.tilemap.save("map.json")
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
+                    if event.key == pygame.K_ESCAPE:
+                        self.start_menu()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_a:
                         self.movement[0] = False
