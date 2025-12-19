@@ -1,7 +1,3 @@
----
-
-## Game Controls
-
 ## Player Controls
 
 * **Arrow Left / Right** — Move left / right
