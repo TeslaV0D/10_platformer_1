@@ -1,6 +1,6 @@
 ---
 
-## 🎮 Game Controls
+## Game Controls
 
 ### Player Controls
 
@@ -11,7 +11,7 @@
 
 ---
 
-## 🗺️ Map Editor Controls
+## Map Editor Controls
 
 * **W / A / S / D** — Move camera
 * **Mouse Wheel** — Select block
@@ -22,7 +22,7 @@
 
 ---
 
-## 🧠 Features
+## Features
 
 * Smooth platformer movement (gravity, jumping, dashing)
 * Tile-based level system
@@ -31,7 +31,7 @@
 
 ---
 
-## ▶️ Run the Game
+## Run the Game
 
 ```
 python game.exe
@@ -39,7 +39,7 @@ python game.exe
 
 ---
 
-## 📚 Credits
+## Credits
 
 Based on a Pygame platformer tutorial by **DaFluffyPotato**.
 
