@@ -1,4 +1,15 @@
-## Player Controls
+A---
+
+# 🥷 Ninja Game
+
+**Ninja Game** is a 2D pixel **platformer** built with **Pygame**, inspired by a full YouTube tutorial.
+You control a ninja who can run, jump and dash through platform-based levels while avoiding dangers and reaching the goal.
+
+---
+
+## 🎮 Game Controls
+
+### Player Controls
 
 * **Arrow Left / Right** — Move left / right
 * **Arrow Up** — Jump
@@ -7,7 +18,7 @@
 
 ---
 
-## Map Editor Controls
+## 🗺️ Map Editor Controls
 
 * **W / A / S / D** — Move camera
 * **Mouse Wheel** — Select block
@@ -18,7 +29,7 @@
 
 ---
 
-## Features
+## 🧠 Features
 
 * Smooth platformer movement (gravity, jumping, dashing)
 * Tile-based level system
@@ -27,15 +38,13 @@
 
 ---
 
-## Run the Game
+## ▶️ Run the Game
 
-```
 python game.exe
-```
 
 ---
 
-## Credits
+## 📚 Credits
 
 Based on a Pygame platformer tutorial by **DaFluffyPotato**.
 
