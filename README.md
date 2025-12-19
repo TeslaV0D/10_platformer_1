@@ -2,7 +2,7 @@
 
 ## Game Controls
 
-### Player Controls
+## Player Controls
 
 * **Arrow Left / Right** — Move left / right
 * **Arrow Up** — Jump
