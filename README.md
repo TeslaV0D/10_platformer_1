@@ -1,5 +1,3 @@
-A---
-
 # 🥷 Ninja Game
 
 **Ninja Game** is a 2D pixel **platformer** built with **Pygame**, inspired by a full YouTube tutorial.
