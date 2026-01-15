@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+import time
+import xmltodict
+from ncclient import manager
+
+from rpi_ws281x import PixelStrip, Color
+
+# =========================
+# NETCONF Settings
+# =========================
+HOST = "192.168.10.1"
+USER = "cisco"
+PASS = "Karma321"
+PORT = 830
+
+POLL_INTERVAL = 1.0  # Sekunden
+
+NETCONF_FILTER = """
+<filter>
+  <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces"/>
+</filter>
+"""
+
+# =========================
+# LED Strip Settings
+# =========================
+LED_COUNT      = 60       # Gesamt-LEDs
+LED_PIN        = 18       # GPIO18 (PWM) typisch
+LED_FREQ_HZ    = 800000
+LED_DMA        = 10
+LED_BRIGHTNESS = 80       # 0-255
+LED_INVERT     = False
+LED_CHANNEL    = 0
+
+# WS2812 typischerweise: ws.WS2811_STRIP_GRB
+# Manche Strips sind RGB. Wenn Farben falsch sind -> GRB/RGB wechseln.
+try:
+    import rpi_ws281x as ws
+    LED_STRIP_TYPE = ws.WS2811_STRIP_GRB
+except Exception:
+    LED_STRIP_TYPE = None  # fallback
+
+# Farben
+COLOR_UP       = Color(0, 255, 0)   # Grün
+COLOR_DOWN     = Color(255, 0, 0)   # Rot
+COLOR_UNKNOWN  = Color(0, 0, 30)    # Dunkelblau (nicht gefunden/kein Status)
+COLOR_NET_ERR  = Color(255, 120, 0) # Orange (NETCONF error)
+COLOR_OFF      = Color(0, 0, 0)
+
+# =========================
+# Mapping: Interface -> LED Index
+# =========================
+def build_led_map():
+    led_map = {}
+
+    idx = 0
+    # Gi1/0/1-48 -> LEDs 0..47
+    for p in range(1, 49):
+        led_map[f"GigabitEthernet1/0/{p}"] = idx
+        idx += 1
+
+    # Gi1/1/1-4 -> LEDs 48..51
+    for p in range(1, 5):
+        led_map[f"GigabitEthernet1/1/{p}"] = idx
+        idx += 1
+
+    # VLANs -> LEDs 52..53 (Passe die VLAN-Interfaces an, wie sie bei dir heißen)
+    led_map["Vlan10"] = idx; idx += 1
+    led_map["Vlan20"] = idx; idx += 1
+
+    # Frei: LEDs 54..59
+    # Beispiel: Status-LEDs
+    led_map["_NETCONF_OK"] = 54
+    led_map["_NETCONF_ERR"] = 55
+    # 56-59 bleiben frei
+
+    return led_map
+
+LED_MAP = build_led_map()
+
+# =========================
+# NETCONF Helpers
+# =========================
+def connect_netconf():
+    return manager.connect(
+        host=HOST,
+        port=PORT,
+        username=USER,
+        password=PASS,
+        hostkey_verify=False,
+        allow_agent=False,
+        look_for_keys=False,
+        timeout=30
+    )
+
+def parse_interfaces_state(xml: str):
+    """
+    Returns dict: { "InterfaceName": "up|down|unknown|..." }
+    """
+    data = xmltodict.parse(xml)
+
+    interfaces = (
+        data.get("rpc-reply", {})
+            .get("data", {})
+            .get("interfaces-state", {})
+            .get("interface", [])
+    )
+
+    if isinstance(interfaces, dict):
+        interfaces = [interfaces]
+
+    status = {}
+    for iface in interfaces:
+        name = iface.get("name")
+        oper = iface.get("oper-status", "unknown")
+        if name:
+            status[name] = oper
+    return status
+
+# =========================
+# LED Helpers
+# =========================
+def set_led(strip: PixelStrip, idx: int, color: int):
+    if idx is None or idx < 0 or idx >= LED_COUNT:
+        return
+    strip.setPixelColor(idx, color)
+
+def apply_interface_to_led(strip: PixelStrip, iface_name: str, oper_status: str):
+    idx = LED_MAP.get(iface_name)
+    if idx is None:
+        return
+
+    if oper_status == "up":
+        set_led(strip, idx, COLOR_UP)
+    elif oper_status == "down":
+        set_led(strip, idx, COLOR_DOWN)
+    else:
+        set_led(strip, idx, COLOR_UNKNOWN)
+
+def show_netconf_ok(strip: PixelStrip, ok: bool):
+    ok_idx = LED_MAP.get("_NETCONF_OK")
+    err_idx = LED_MAP.get("_NETCONF_ERR")
+    if ok:
+        set_led(strip, ok_idx, Color(0, 80, 0))
+        set_led(strip, err_idx, COLOR_OFF)
+    else:
+        set_led(strip, ok_idx, COLOR_OFF)
+        set_led(strip, err_idx, Color(80, 20, 0))
+
+# =========================
+# Main Loop
+# =========================
+def main():
+    # Strip init
+    if LED_STRIP_TYPE is not None:
+        strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT,
+                           LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP_TYPE)
+    else:
+        strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT,
+                           LED_BRIGHTNESS, LED_CHANNEL)
+
+    strip.begin()
+
+    # Start: alles aus
+    for i in range(LED_COUNT):
+        set_led(strip, i, COLOR_OFF)
+    strip.show()
+
+    # NETCONF session persistent halten (viel schneller als reconnect)
+    while True:
+        try:
+            with connect_netconf() as m:
+                show_netconf_ok(strip, True)
+                strip.show()
+
+                while True:
+                    reply = m.get(NETCONF_FILTER)
+                    status_map = parse_interfaces_state(reply.xml)
+
+                    # Default: alle gemappten LEDs (außer Status-LEDs) erstmal unknown,
+                    # dann setzen wir die, die wir wirklich sehen.
+                    for name, idx in LED_MAP.items():
+                        if name.startswith("_"):
+                            continue
+                        set_led(strip, idx, COLOR_UNKNOWN)
+
+                    # Jetzt echte Status anwenden
+                    for iface_name, oper in status_map.items():
+                        apply_interface_to_led(strip, iface_name, oper)
+
+                    # Optional: VLAN-Status fallback (manche Geräte liefern VLAN anders)
+                    # (Wenn dein VLAN Interface anders heißt, passt du LED_MAP an.)
+
+                    strip.show()
+                    time.sleep(POLL_INTERVAL)
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            # NETCONF down / Timeout / RPC error -> Status LED orange
+            show_netconf_ok(strip, False)
+            strip.show()
+            time.sleep(2.0)  # kurze Pause und reconnect
+
+    # Ende: alles aus
+    for i in range(LED_COUNT):
+        set_led(strip, i, COLOR_OFF)
+    strip.show()
+
+if __name__ == "__main__":
+    main()
